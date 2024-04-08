@@ -6,8 +6,6 @@ buildscript {
         targetSdkVersion = 34
         ndkVersion = "25.1.8937393"
         kotlinVersion = "1.8.0"
-        appCompatVersion = "1.4.2"      // Or higher.  Required for new AndroidX compatibility.
-        googlePlayServicesLocationVersion = "21.2.0"  // Or higher. Check https://developers.google.com/android/guides/setup.
     }
     repositories {
         google()
@@ -21,11 +19,3 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
-
-allprojects {
-    repositories {
-        maven { url("${project(':react-native-background-geolocation').projectDir}/libs") }
-        maven { url 'https://developer.huawei.com/repo/' }
-        maven { url("${project(':react-native-background-fetch').projectDir}/libs") }
-    }
-}
