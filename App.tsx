@@ -38,11 +38,19 @@ const HelloWorld = () => {
     /// 2. ready the plugin.
     BackgroundGeolocation.ready({
       // Geolocation Config
-      desiredAccuracy: BackgroundGeolocation.DESIRED_ACCURACY_HIGH,
+      allowIdenticalLocations: true,
+      disableStopDetection: true,
+      disableMotionActivityUpdates: true,
+      stopDetectionDelay: 60,
       distanceFilter: 0,
       locationUpdateInterval: 10000,
+      stopOnStationary: false,
+      stopTimeout: 0,
+
+      desiredAccuracy: BackgroundGeolocation.DESIRED_ACCURACY_HIGH,
+
+      //foregroundService: true,
       // Activity Recognition
-      stopTimeout: 5,
       // Application config
       debug: true, // <-- enable this hear sounds for background-geolocation life-cycle.
       logLevel: BackgroundGeolocation.LOG_LEVEL_VERBOSE,
