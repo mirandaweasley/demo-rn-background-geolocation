@@ -2,103 +2,148 @@
 import React from 'react';
 
 import {
+  Alert,
+  Button,
+  StyleSheet,
   Switch,
   Text,
-  View,
+  TextInput,
+  ScrollView,
 } from 'react-native';
 
-import BackgroundGeolocation, {
-  Location,
-  Subscription
-} from "react-native-background-geolocation";
+import BackgroundGeolocation from "react-native-background-geolocation";
 
 const HelloWorld = () => {
   const [enabled, setEnabled] = React.useState(false);
+  const [ready, setReady] = React.useState(false);
   const [location, setLocation] = React.useState('');
+  const [username, setUsername] = React.useState('2250748161613');
+  const [password, setPassword] = React.useState('');
+  const [accessToken, setAccessToken] = React.useState('');
+  const [refreshToken, setRefreshToken] = React.useState('');
 
-  React.useEffect(() => {
-    /// 1.  Subscribe to events.
-    const onLocation:Subscription = BackgroundGeolocation.onLocation((location) => {
-      console.log('[onLocation]', location);
-      setLocation(JSON.stringify(location, null, 2));
-    })
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: 20,
+    },
+    label: {
+      fontSize: 16,
+      marginBottom: 6,
+    },
+    text: {
+      fontFamily: 'monospace',
+      fontSize: 12,
+      padding: 10,
+    },
+    input: {
+      height: 40,
+      marginBottom: 12,
+      borderWidth: 1,
+      padding: 10,
+    },
+  });
 
-    const onMotionChange:Subscription = BackgroundGeolocation.onMotionChange((event) => {
-      console.log('[onMotionChange]', event);
-    });
-
-    const onActivityChange:Subscription = BackgroundGeolocation.onActivityChange((event) => {
-      console.log('[onActivityChange]', event);
-    })
-
-    const onProviderChange:Subscription = BackgroundGeolocation.onProviderChange((event) => {
-      console.log('[onProviderChange]', event);
-    })
-
-    /// 2. ready the plugin.
-    BackgroundGeolocation.ready({
-      // Geolocation Config
-      allowIdenticalLocations: true,
-      disableStopDetection: true,
-      disableMotionActivityUpdates: true,
-      stopDetectionDelay: 60,
-      distanceFilter: 0,
-      locationUpdateInterval: 10000,
-      stopOnStationary: false,
-      stopTimeout: 0,
-
-      desiredAccuracy: BackgroundGeolocation.DESIRED_ACCURACY_HIGH,
-
-      //foregroundService: true,
-      // Activity Recognition
-      // Application config
-      debug: true, // <-- enable this hear sounds for background-geolocation life-cycle.
-      logLevel: BackgroundGeolocation.LOG_LEVEL_VERBOSE,
-      stopOnTerminate: false,   // <-- Allow the background-service to continue tracking when user closes the app.
-      startOnBoot: true,        // <-- Auto start tracking when device is powered-up.
-      // HTTP / SQLite config
-      url: 'https://ecoges.ci/log.php',
-      batchSync: false,       // <-- [Default: false] Set true to sync locations to server in a single HTTP request.
-      autoSync: true,         // <-- [Default: true] Set true to sync each location to server as it arrives.
-      headers: {              // <-- Optional HTTP headers
-        "X-FOO": "bar"
-      },
-      params: {               // <-- Optional HTTP params
-        "auth_token": "maybe_your_server_authenticates_via_token_YES?"
-      }
-    }).then((state) => {
-      setEnabled(state.enabled)
-      console.log("- BackgroundGeolocation is configured and ready: ", state.enabled);
-    });
-
-    return () => {
-      // Remove BackgroundGeolocation event-subscribers when the View is removed or refreshed
-      // during development live-reload.  Without this, event-listeners will accumulate with
-      // each refresh during live-reload.
-      onLocation.remove();
-      onMotionChange.remove();
-      onActivityChange.remove();
-      onProviderChange.remove();
-    }
-  }, []);
-
-  /// 3. start / stop BackgroundGeolocation
   React.useEffect(() => {
     if (enabled) {
-      BackgroundGeolocation.start();
+      BackgroundGeolocation.ready({
+        distanceFilter: 0,
+        locationUpdateInterval: 10000,
+        stopTimeout: 5,
+        desiredAccuracy: BackgroundGeolocation.DESIRED_ACCURACY_HIGH,
+        debug: true,
+        logLevel: BackgroundGeolocation.LOG_LEVEL_VERBOSE,
+        stopOnTerminate: false,
+        startOnBoot: true,
+        url: 'https://sigcoges.com/v1/event/user_location',
+        batchSync: false,
+        autoSync: true,
+        authorization: {
+          strategy: "JWT",
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          refreshUrl: "https://sigcoges.com/v1/auth/refresh",
+          refreshPayload: {
+            refreshToken: "{refreshToken}"
+          }
+        }
+      }).then((state) => {
+        setReady(true);
+        console.log("- BackgroundGeolocation is configured and ready: ", state.enabled);
+        if (!state.enabled) {
+          BackgroundGeolocation.start().then(() => {
+            console.log("- BackgroundGeolocation starting");
+
+            console.log("- BackgroundGeolocation.changePace(true)")
+            BackgroundGeolocation.changePace(true);
+          });
+        }
+      });
     } else {
-      BackgroundGeolocation.stop();
-      setLocation('');
+      if (ready) {
+        console.log("- BackgroundGeolocation stopping");
+        BackgroundGeolocation.stop();
+        setLocation('');
+      }
     }
   }, [enabled]);
 
-  return (
-    <View style={{alignItems:'center'}}>
-      <Text>Click to enable BackgroundGeolocation</Text>
-      <Switch value={enabled} onValueChange={setEnabled} />
-      <Text style={{fontFamily:'monospace', fontSize:12}}>{location}</Text>
-    </View>
-  )
+const handleLogin = async () => {
+
+  try {
+    const response = await fetch('https://sigcoges.com/v1/auth', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        login: username,
+        password: password,
+      }),
+    });
+
+    const json = await response.json();
+
+    if (!response.ok) {
+      throw new Error(json.msg || 'Login failed');
+    }
+
+    if (!json.refresh_token) {
+      throw new Error("refresh_token not found");
+    }
+
+    setRefreshToken(json.refresh_token.replace(/^Bearer /, ''));
+
+    if (!json.access_token) {
+      throw new Error("access_token not found");
+    }
+
+    setAccessToken(json.access_token.replace(/^Bearer /, ''));
+
+  } catch (error) {
+    Alert.alert("Login failed");
+
+  }
+};
+
+return (
+  <ScrollView style={styles.container}>
+    <Text style={styles.label}>Username:</Text>
+    <TextInput style={styles.input} value={username} onChangeText={setUsername} placeholder="Enter your username"></TextInput>
+    <Text style={styles.label}>Password:</Text>
+    <TextInput style={styles.input} value={password} onChangeText={setPassword} placeholder="Enter your password" secureTextEntry={true}></TextInput>
+    <Button title="Login" onPress={handleLogin}></Button>
+    <Switch value={enabled} onValueChange={setEnabled} />
+    <Text style={styles.label}>Access token:</Text>
+    <Text style={styles.text}>{accessToken}</Text>
+    <Text style={styles.label}>Refresh token:</Text>
+    <Text style={styles.text}>{refreshToken}</Text>
+    <Text style={styles.text}>{location}</Text>
+    <Text style={styles.text}></Text>
+  </ScrollView>
+)
+
+  
 }
 
 export default HelloWorld;
