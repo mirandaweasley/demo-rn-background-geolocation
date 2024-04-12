@@ -63,9 +63,12 @@ const HelloWorld = () => {
           accessToken: accessToken,
           refreshToken: refreshToken,
           refreshUrl: "https://sigcoges.com/v1/auth/refresh",
+          refreshHeaders: {
+            Authorization: refreshToken
+          },
           refreshPayload: {
             refreshToken: "{refreshToken}"
-          }
+          },
         }
       }).then((state) => {
         setReady(true);
