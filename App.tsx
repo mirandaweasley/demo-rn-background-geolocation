@@ -18,7 +18,7 @@ const HelloWorld = () => {
   const [ready, setReady] = React.useState(false);
   const [location, setLocation] = React.useState('');
   const [username, setUsername] = React.useState('2250748161613');
-  const [password, setPassword] = React.useState('');
+  const [password, setPassword] = React.useState('Demo');
   const [accessToken, setAccessToken] = React.useState('');
   const [refreshToken, setRefreshToken] = React.useState('');
 
@@ -46,6 +46,13 @@ const HelloWorld = () => {
 
   React.useEffect(() => {
     if (enabled) {
+      BackgroundGeolocation.onAuthorization((event) => {
+        if (event.success) {
+          console.log("[authorization] ERROR: ", event.error);
+        } else {
+          console.log("[authorization] SUCCESS: ", event.response);
+        }
+      });      
       BackgroundGeolocation.ready({
         distanceFilter: 0,
         locationUpdateInterval: 10000,
@@ -76,7 +83,6 @@ const HelloWorld = () => {
         if (!state.enabled) {
           BackgroundGeolocation.start().then(() => {
             console.log("- BackgroundGeolocation starting");
-
             console.log("- BackgroundGeolocation.changePace(true)")
             BackgroundGeolocation.changePace(true);
           });
