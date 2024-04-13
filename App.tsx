@@ -71,7 +71,7 @@ const HelloWorld = () => {
           refreshToken: refreshToken,
           refreshUrl: "https://sigcoges.com/v1/auth/refresh",
           refreshHeaders: {
-            Authorization: refreshToken
+            Authorization: `Bearer ${refreshToken}`,
           },
           refreshPayload: {
             refreshToken: "{refreshToken}"
