@@ -50,12 +50,14 @@ const HelloWorld = () => {
         if (event.success) {
           console.log("[authorization] ERROR: ", event.error);
         } else {
+          console.log("[authorization] SUCCESS: json: ", JSON.stringify(event));
           console.log("[authorization] SUCCESS: ", event.response);
         }
       });
       BackgroundGeolocation.ready({
         distanceFilter: 0,
         locationUpdateInterval: 10000,
+        fastestLocationUpdateInterval: 10000,
         stopTimeout: 5,
         desiredAccuracy: BackgroundGeolocation.DESIRED_ACCURACY_HIGH,
         debug: true,
